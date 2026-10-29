@@ -33,6 +33,19 @@ html,body,#app{margin:0;height:100%;overflow:hidden;background:var(--graphite);c
 .menu.open{display:grid}
 .menu .slot{width:44px;height:44px}
 #more.on{background:var(--iron);color:var(--bone)}
+.ly{flex-direction:column;align-items:stretch;width:220px;gap:6px;padding:8px;max-height:70vh;overflow:auto}
+.ly-title{font-weight:600;display:flex;align-items:center;gap:6px}
+.ly-title .grip{width:16px;height:22px}
+.ly-tools{display:flex;flex-wrap:wrap;gap:4px}
+.ly-tools button{padding:4px 6px;font-size:12px}
+.ly-row{display:flex;align-items:center;gap:4px;padding:3px;border-radius:8px}
+.ly-row.on{background:var(--iron);color:var(--bone)}
+.ly-row.on button{color:var(--bone);border-color:var(--bone)}
+.ly-row .ly-name{flex:1;text-align:left;border:none;padding:4px}
+.ly-row button{padding:3px 5px;font-size:11px}
+.ly-p{display:flex;align-items:center;gap:6px;font-size:12px}
+.ly-p input[type=range]{flex:1;accent-color:var(--iron)}
+.ly-p select{font:inherit;font-size:12px;background:var(--bone);color:var(--graphite);border:.5px solid var(--iron);border-radius:6px}
 .bp{flex-direction:column;align-items:stretch;width:230px;gap:8px;padding:8px}
 .bp-title{font-weight:600;padding:2px 2px 4px}
 .bp-row{display:grid;grid-template-columns:72px 1fr 48px;align-items:center;gap:6px;font-size:12px}
@@ -73,11 +86,12 @@ body.nui .mod:not(#chip){display:none}
 </head>
 <body>
 <div id="app">
-  <div id="stage" class="stage"><div id="board" class="board"><canvas width="2048" height="1536" style="background:#EEECE4"></canvas></div></div>
+  <div id="stage" class="stage"><div id="board" class="board"></div></div>
   <div id="bar" class="mod bar"><button class="grip" aria-label="Move action bar"></button><button id="undo" class="txt">Undo</button><button id="redo" class="txt">Redo</button><span class="sep"></span><div id="slots" class="slots"></div><span id="brushname" class="bname"></span><button id="more" class="txt" aria-expanded="false" aria-controls="menu" aria-label="Brush slots 4 to 9">More</button><div id="menu" class="menu" role="group" aria-label="Quick access"></div></div>
   <div id="panel" class="mod"><div class="row" style="display:flex;align-items:center;gap:6px"><button class="grip" aria-label="Move panel"></button><span>Panel</span><button id="reset" style="margin-left:auto">Reset layout</button></div></div>
   <div id="colour" class="mod panel cp"></div>
   <div id="brush" class="mod panel bp"></div>
+  <div id="layers" class="mod panel ly"></div>
   <button id="chip" class="mod" aria-label="Hide interface">&#9675;</button>
 </div>
 <script type="module" src="main.js"></script>

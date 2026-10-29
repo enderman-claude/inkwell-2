@@ -4,19 +4,34 @@ import { createPen } from './draw/pen.js';
 import { BRUSHES } from './ui/brushes.js';
 import { createStore } from './core/store.js';
 import { hsvToRgb, hexOf } from './core/colour.js';
+import { createDocument } from './core/document.js';
+import { createHistory } from './core/history.js';
 import { features } from './features/index.js';
 
-const INK = ['#2A2A27', '#D9D6CC', '#EEECE4', '#3B4F6B', '#A4512E', '#1B1B19', '#4A4A45', '#6F6E68', '#A9A89F', '#C9C5B8', '#F5F3EC', '#2E4057', '#5C7A99', '#8FA7BD', '#7A3B22', '#C27A55'];
-const store = createStore({ colour: { h: 215, s: 0.4, v: 0.42 }, recents: [], schemes: [{ name: 'Ink', colors: INK }], active: 0, link: null, brushes: BRUSHES.map(b => ({ ...b, colour: '#2A2A27' })), slot: 0 });
-
 const W = 2048, H = 1536;
+const INK = ['#2A2A27', '#D9D6CC', '#EEECE4', '#3B4F6B', '#A4512E', '#1B1B19', '#4A4A45', '#6F6E68', '#A9A89F', '#C9C5B8', '#F5F3EC', '#2E4057', '#5C7A99', '#8FA7BD', '#7A3B22', '#C27A55'];
+
+const store = createStore({
+  colour: { h: 215, s: 0.4, v: 0.42 }, recents: [], schemes: [{ name: 'Ink', colors: INK }], active: 0, link: null,
+  brushes: BRUSHES.map(b => ({ ...b })), slot: 0
+});
+const doc = createDocument(W, H);
+const history = createHistory();
+
 const stage = document.getElementById('stage');
 const board = document.getElementById('board');
-const canvas = board.querySelector('canvas');
+doc.mountBoard(board);
 const view = createView({ stage, board, W, H });
 view.fit();
 
-const pen = createPen({ stage, canvas, toBoard: (x, y) => view.pt(x, y), getBrush: () => { const st = store.get(), b = st.brushes[st.slot]; const c = st.colour; return { ...b, colour: hexOf(hsvToRgb(c.h, c.s, c.v)) }; } });
+const pen = createPen({
+  stage, doc, history,
+  toBoard: (x, y) => view.pt(x, y),
+  getBrush: () => {
+    const st = store.get(), b = st.brushes[st.slot], c = st.colour;
+    return { ...b, colour: b.erase ? b.colour : hexOf(hsvToRgb(c.h, c.s, c.v)) };
+  }
+});
 
 const hint = document.createElement('div');
 hint.className = 'edgehint';
@@ -27,20 +42,22 @@ const bar = register('bar', document.getElementById('bar'), { edge: 'bottom', t:
 const panel = register('panel', document.getElementById('panel'), { edge: null, fx: 0.8, fy: 0.2 });
 const colourMod = register('colour', document.getElementById('colour'), { edge: 'right', t: 0.05 });
 const brushMod = register('brush', document.getElementById('brush'), { edge: null, fx: 0.05, fy: 0.55 });
-attach(brushMod, brushMod.node, { onHint: showHint });
+const layersMod = register('layers', document.getElementById('layers'), { edge: 'left', t: 0.05 });
 const chip = register('chip', document.getElementById('chip'), { edge: 'right', t: 0.9 });
+
 attach(bar, bar.node.querySelector('.grip'), { onHint: showHint });
 attach(panel, panel.node.querySelector('.grip'), { onHint: showHint });
+attach(brushMod, brushMod.node, { onHint: showHint });
 attach(chip, chip.node, { onTap: () => document.body.classList.toggle('nui'), onHint: showHint });
 document.getElementById('reset').addEventListener('click', resetLayout);
 
 const undoBtn = document.getElementById('undo');
 const redoBtn = document.getElementById('redo');
-const syncHistory = () => { undoBtn.disabled = !pen.canUndo(); redoBtn.disabled = !pen.canRedo(); };
-undoBtn.addEventListener('click', () => { pen.undo(); syncHistory(); });
-redoBtn.addEventListener('click', () => { pen.redo(); syncHistory(); });
-stage.addEventListener('pointerup', syncHistory);
-undoBtn.disabled = true; redoBtn.disabled = true;
+undoBtn.addEventListener('click', () => history.undo());
+redoBtn.addEventListener('click', () => history.redo());
+const syncHistory = () => { undoBtn.disabled = !history.canUndo(); redoBtn.disabled = !history.canRedo(); };
+history.subscribe(syncHistory);
+syncHistory();
 
 const slotBtns = BRUSHES.map((brush, i) => {
   const b = document.createElement('button');
@@ -52,10 +69,9 @@ const slotBtns = BRUSHES.map((brush, i) => {
   b.addEventListener('click', () => select(i));
   return b;
 });
-const barSlots = document.getElementById('slots');
 const menu = document.getElementById('menu');
 const more = document.getElementById('more');
-slotBtns.slice(0, 3).forEach(b => barSlots.append(b));
+slotBtns.slice(0, 3).forEach(b => document.getElementById('slots').append(b));
 slotBtns.slice(3).forEach(b => menu.append(b));
 
 function select(i) { store.set({ slot: i }); }
@@ -74,12 +90,13 @@ document.addEventListener('pointerdown', e => {
   if (!menu.contains(e.target) && e.target !== more) setMenu(false);
 });
 addEventListener('keydown', e => {
-  if (e.target.matches('input, textarea')) return;
+  if (e.target.matches('input, textarea, select')) return;
   const n = Number(e.key);
   if (n >= 1 && n <= 9) select(n - 1);
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? history.redo() : history.undo(); }
 });
-select(0);
 
-const ctx = { store, node: id => document.getElementById(id) };
+const ctx = { store, doc, history, node: id => document.getElementById(id) };
 features.forEach(f => f.mount(ctx));
 attach(colourMod, colourMod.node.querySelector('.cp-head'), { onHint: showHint });
+attach(layersMod, layersMod.node.querySelector('.grip'), { onHint: showHint });

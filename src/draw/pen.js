@@ -16,17 +16,14 @@ const rgba = (hex, a) => {
   return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
 };
 
-export function createPen({ stage, canvas, toBoard, getBrush }) {
-  const ctx = canvas.getContext('2d');
-  const undoStack = [];
-  const redoStack = [];
-  const copy = () => {
-    const c = document.createElement('canvas');
-    c.width = canvas.width; c.height = canvas.height;
-    c.getContext('2d').drawImage(canvas, 0, 0);
-    return c;
-  };
-  const restore = src => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(src, 0, 0); };
+function snap(canvas) {
+  const c = document.createElement('canvas');
+  c.width = canvas.width; c.height = canvas.height;
+  c.getContext('2d').drawImage(canvas, 0, 0);
+  return c;
+}
+
+export function createPen({ stage, doc, history, toBoard, getBrush }) {
   let stroke = null;
 
   function paintTo(s, x, y, p) {
@@ -37,25 +34,27 @@ export function createPen({ stage, canvas, toBoard, getBrush }) {
     const step = Math.max(0.5, r * 2 * b.spacing);
     const n = Math.max(1, Math.ceil(dist / step));
     const colour = b.erase ? 'rgba(0,0,0,1)' : rgba(b.colour, 1);
+    const ctx = s.ctx;
     ctx.save();
     if (b.erase) ctx.globalCompositeOperation = 'destination-out';
+    else if (s.alphaLock) ctx.globalCompositeOperation = 'source-atop';
     for (let i = 1; i <= n; i++) {
       const t = i / n;
       dab(ctx, lx + (x - lx) * t, ly + (y - ly) * t, r, b, colour, b.flow);
     }
     ctx.restore();
     s.last = [x, y];
-    s.pressure = p;
   }
 
   stage.addEventListener('pointerdown', e => {
     if (e.pointerType === 'touch' || e.button !== 0) return;
+    const layer = doc.activeLayer();
+    if (!layer || layer.lock) return;
     const [x, y] = toBoard(e.clientX, e.clientY);
-    undoStack.push(copy());
-    if (undoStack.length > 20) undoStack.shift();
-    redoStack.length = 0;
-    stroke = { brush: getBrush(), last: [x, y], pressure: e.pressure > 0 ? e.pressure : 0.5, id: e.pointerId };
-    paintTo(stroke, x, y, stroke.pressure);
+    const canvas = layer.canvas;
+    const before = snap(canvas);
+    stroke = { canvas, before, ctx: canvas.getContext('2d'), brush: getBrush(), last: [x, y], id: e.pointerId, alphaLock: layer.alphaLock };
+    paintTo(stroke, x, y, e.pressure > 0 ? e.pressure : 0.5);
     stage.setPointerCapture(e.pointerId);
   });
 
@@ -67,14 +66,16 @@ export function createPen({ stage, canvas, toBoard, getBrush }) {
     }
   });
 
-  const end = e => { if (stroke && e.pointerId === stroke.id) stroke = null; };
+  const end = e => {
+    if (!stroke || e.pointerId !== stroke.id) return;
+    const { canvas, before } = stroke;
+    const after = snap(canvas);
+    history.push({
+      undo: () => { const c = canvas.getContext('2d'); c.clearRect(0, 0, canvas.width, canvas.height); c.drawImage(before, 0, 0); doc.emit(); },
+      redo: () => { const c = canvas.getContext('2d'); c.clearRect(0, 0, canvas.width, canvas.height); c.drawImage(after, 0, 0); doc.emit(); }
+    });
+    stroke = null;
+  };
   stage.addEventListener('pointerup', end);
   stage.addEventListener('pointercancel', end);
-
-  return {
-    undo() { if (undoStack.length) { redoStack.push(copy()); restore(undoStack.pop()); } },
-    redo() { if (redoStack.length) { undoStack.push(copy()); restore(redoStack.pop()); } },
-    canUndo: () => undoStack.length > 0,
-    canRedo: () => redoStack.length > 0
-  };
 }
