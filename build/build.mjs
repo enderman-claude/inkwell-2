@@ -1,6 +1,12 @@
 import { build } from 'esbuild';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 
+const fontFile = w => `node_modules/@fontsource/hanken-grotesk/files/hanken-grotesk-latin-${w}-normal.woff2`;
+const fontCss = (await Promise.all([400, 600].map(async w => {
+  const b64 = (await readFile(fontFile(w))).toString('base64');
+  return `@font-face{font-family:"Hanken Grotesk";font-weight:${w};font-style:normal;font-display:swap;src:url(data:font/woff2;base64,${b64}) format("woff2")}`;
+}))).join('');
+
 const srcHtml = await readFile('src/index.html', 'utf8');
 
 const bundle = await build({
@@ -14,6 +20,7 @@ const bundle = await build({
 const js = bundle.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
 
 const html = srcHtml
+  .replace('/*FONTS*/', () => fontCss)
   .replace(/<script type="module" src="main.js"><\/script>\s*/, '')
   .replace('</body>', () => `<script>${js}</script>\n</body>`);
 

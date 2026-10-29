@@ -1,20 +1,4 @@
-function dab(ctx, x, y, radius, brush, colour, alpha) {
-  const hard = Math.min(0.999, Math.max(0, brush.hardness));
-  const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
-  g.addColorStop(0, colour);
-  g.addColorStop(hard, colour);
-  g.addColorStop(1, colour.replace(/[\d.]+\)$/, '0)'));
-  ctx.globalAlpha = alpha;
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-const rgba = (hex, a) => {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
-};
+import { dab, rgba } from './dab.js';
 
 function snap(canvas) {
   const c = document.createElement('canvas');
@@ -40,7 +24,7 @@ export function createPen({ stage, doc, history, toBoard, getBrush }) {
     else if (s.alphaLock) ctx.globalCompositeOperation = 'source-atop';
     for (let i = 1; i <= n; i++) {
       const t = i / n;
-      dab(ctx, lx + (x - lx) * t, ly + (y - ly) * t, r, b, colour, b.flow);
+      dab(ctx, lx + (x - lx) * t, ly + (y - ly) * t, r, b.hardness, colour, b.flow);
     }
     ctx.restore();
     s.last = [x, y];

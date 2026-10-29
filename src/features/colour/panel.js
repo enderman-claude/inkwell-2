@@ -1,5 +1,6 @@
 import { hsvToRgb, rgbToHsv, rgbToCmyk, cmykToRgb, hexOf, parseHex, clamp } from '../../core/colour.js';
 import { drawWheel, wheelHit, wheelValue } from './wheel.js';
+import { icon } from '../../ui/icons.js';
 
 const MODES = {
   rgb: [['R', 0, 255], ['G', 0, 255], ['B', 0, 255]],
@@ -9,10 +10,10 @@ const MODES = {
 
 export function mountColourPanel(node, store) {
   node.innerHTML = `
-    <div class="cp-head"><span class="cp-preview" aria-hidden="true"></span><input class="cp-hex" maxlength="7" aria-label="Hex colour"></div>
+    <div class="cp-head"><span class="cp-preview" aria-hidden="true"></span><input class="cp-hex" maxlength="7" aria-label="Hex colour" title="Hex colour"></div>
     <canvas class="cp-wheel" width="200" height="200" aria-label="Hue and saturation wheel"></canvas>
     <div class="cp-mini"></div>
-    <div class="cp-modes"><button data-m="rgb" class="on">RGB</button><button data-m="hsv">HSV</button><button data-m="cmyk">CMYK</button></div>
+    <div class="seg cp-modes"><button data-m="rgb" class="on">RGB</button><button data-m="hsv">HSV</button><button data-m="cmyk">CMYK</button></div>
     <div class="cp-rows"></div>`;
   const preview = node.querySelector('.cp-preview');
   const hexIn = node.querySelector('.cp-hex');
@@ -103,7 +104,7 @@ export function mountColourPanel(node, store) {
     })));
     const add = document.createElement('button');
     add.className = 'sw add';
-    add.textContent = '+';
+    add.innerHTML = icon('plus');
     add.setAttribute('aria-label', 'Add current colour to preset');
     add.addEventListener('click', () => {
       const h = hex();

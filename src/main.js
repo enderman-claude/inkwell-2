@@ -7,6 +7,7 @@ import { hsvToRgb, hexOf } from './core/colour.js';
 import { createDocument } from './core/document.js';
 import { createHistory } from './core/history.js';
 import { features } from './features/index.js';
+import { icon } from './ui/icons.js';
 
 const W = 2048, H = 1536;
 const INK = ['#2A2A27', '#D9D6CC', '#EEECE4', '#3B4F6B', '#A4512E', '#1B1B19', '#4A4A45', '#6F6E68', '#A9A89F', '#C9C5B8', '#F5F3EC', '#2E4057', '#5C7A99', '#8FA7BD', '#7A3B22', '#C27A55'];
@@ -39,7 +40,7 @@ document.getElementById('app').append(hint);
 const showHint = edge => { hint.dataset.edge = edge || ''; hint.classList.toggle('on', !!edge); };
 
 const bar = register('bar', document.getElementById('bar'), { edge: 'bottom', t: 0.5 });
-const panel = register('panel', document.getElementById('panel'), { edge: null, fx: 0.8, fy: 0.2 });
+const panel = register('panel', document.getElementById('panel'), { edge: 'top', t: 0.5 });
 const colourMod = register('colour', document.getElementById('colour'), { edge: 'right', t: 0.05 });
 const brushMod = register('brush', document.getElementById('brush'), { edge: null, fx: 0.05, fy: 0.55 });
 const layersMod = register('layers', document.getElementById('layers'), { edge: 'left', t: 0.05 });
@@ -48,12 +49,15 @@ const chip = register('chip', document.getElementById('chip'), { edge: 'right', 
 attach(bar, bar.node.querySelector('.grip'), { onHint: showHint });
 attach(panel, panel.node.querySelector('.grip'), { onHint: showHint });
 attach(brushMod, brushMod.node, { onHint: showHint });
-attach(chip, chip.node, { onTap: () => document.body.classList.toggle('nui'), onHint: showHint });
+const chipIcon = () => { chip.node.innerHTML = icon(document.body.classList.contains('nui') ? 'eye' : 'eyeOff'); };
+attach(chip, chip.node, { onTap: () => { document.body.classList.toggle('nui'); chipIcon(); }, onHint: showHint });
+chipIcon();
 document.getElementById('reset').addEventListener('click', resetLayout);
 const themeBtn = document.getElementById('theme');
 const applyTheme = t => {
   document.documentElement.dataset.theme = t;
-  themeBtn.textContent = t === 'dark' ? 'Light mode' : 'Dark mode';
+  themeBtn.innerHTML = icon(t === 'dark' ? 'sun' : 'moon');
+  themeBtn.title = t === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
   try { localStorage.setItem('inkwell2-theme', t); } catch { }
 };
 let savedTheme = 'dark';
@@ -63,6 +67,10 @@ themeBtn.addEventListener('click', () => applyTheme(document.documentElement.dat
 
 const undoBtn = document.getElementById('undo');
 const redoBtn = document.getElementById('redo');
+undoBtn.innerHTML = icon('undo');
+redoBtn.innerHTML = icon('redo');
+document.getElementById('more').innerHTML = icon('more');
+document.getElementById('reset').innerHTML = icon('reset');
 undoBtn.addEventListener('click', () => history.undo());
 redoBtn.addEventListener('click', () => history.redo());
 const syncHistory = () => { undoBtn.disabled = !history.canUndo(); redoBtn.disabled = !history.canRedo(); };
@@ -87,7 +95,6 @@ slotBtns.slice(3).forEach(b => menu.append(b));
 function select(i) { store.set({ slot: i }); }
 store.subscribe(s => {
   slotBtns.forEach((b, j) => b.classList.toggle('on', j === s.slot));
-  document.getElementById('brushname').textContent = s.brushes[s.slot].name;
 });
 
 const setMenu = open => {
@@ -101,6 +108,7 @@ document.addEventListener('pointerdown', e => {
 });
 addEventListener('keydown', e => {
   if (e.target.matches('input, textarea, select')) return;
+  if (e.key.toLowerCase() === 'h' && !e.ctrlKey && !e.metaKey) { document.body.classList.toggle('nui'); chipIcon(); }
   const n = Number(e.key);
   if (n >= 1 && n <= 9) select(n - 1);
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? history.redo() : history.undo(); }
