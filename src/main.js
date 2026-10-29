@@ -1,7 +1,8 @@
 import { register, attach, resetLayout } from './ui/modules.js';
 import { createView } from './canvas/view.js';
 import { createPen } from './draw/pen.js';
-import { BRUSHES } from './ui/brushes.js';
+import { BRUSHES, byId } from './brushes/library.js';
+import { drawSample } from './draw/sample.js';
 import { createStore } from './core/store.js';
 import { hsvToRgb, hexOf } from './core/colour.js';
 import { createDocument } from './core/document.js';
@@ -14,7 +15,7 @@ const INK = ['#2A2A27', '#D9D6CC', '#EEECE4', '#3B4F6B', '#A4512E', '#1B1B19', '
 
 const store = createStore({
   colour: { h: 215, s: 0.4, v: 0.42 }, recents: [], schemes: [{ name: 'Ink', colors: INK }], active: 0, link: null,
-  brushes: BRUSHES.map(b => ({ ...b })), slot: 0
+  brushes: ['pen', 'ink', 'marker', 'pencil', 'eraser', 'wcolour', 'chalk', 'spray', 'softE'].map(id => ({ ...byId(id), colourDiff: [...byId(id).colourDiff] })), slot: 0
 });
 const doc = createDocument(W, H);
 const history = createHistory();
@@ -28,10 +29,8 @@ view.fit();
 const pen = createPen({
   stage, doc, history,
   toBoard: (x, y) => view.pt(x, y),
-  getBrush: () => {
-    const st = store.get(), b = st.brushes[st.slot], c = st.colour;
-    return { ...b, colour: b.erase ? b.colour : hexOf(hsvToRgb(c.h, c.s, c.v)) };
-  }
+  getBrush: () => store.get().brushes[store.get().slot],
+  getColour: () => { const c = store.get().colour; return hexOf(hsvToRgb(c.h, c.s, c.v)); }
 });
 
 const hint = document.createElement('div');
@@ -43,6 +42,13 @@ const bar = register('bar', document.getElementById('bar'), { edge: 'bottom', t:
 const panel = register('panel', document.getElementById('panel'), { edge: 'top', t: 0.5 });
 const colourMod = register('colour', document.getElementById('colour'), { edge: 'right', t: 0.05 });
 const brushMod = register('brush', document.getElementById('brush'), { edge: null, fx: 0.05, fy: 0.55 });
+const libraryMod = register('library', document.getElementById('library'), { edge: 'left', t: 1 });
+document.getElementById('libtoggle').addEventListener('click', () => {
+  const hidden = libraryMod.node.style.display === 'none';
+  libraryMod.node.style.display = hidden ? '' : 'none';
+  document.getElementById('libtoggle').classList.toggle('on', hidden);
+});
+document.getElementById('libtoggle').innerHTML = icon('brush');
 const layersMod = register('layers', document.getElementById('layers'), { edge: 'left', t: 0.05 });
 const chip = register('chip', document.getElementById('chip'), { edge: 'right', t: 0.9 });
 
@@ -77,13 +83,16 @@ const syncHistory = () => { undoBtn.disabled = !history.canUndo(); redoBtn.disab
 history.subscribe(syncHistory);
 syncHistory();
 
-const slotBtns = BRUSHES.map((brush, i) => {
+const slotBtns = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => {
   const b = document.createElement('button');
   b.className = 'slot';
   b.dataset.slot = i;
-  b.title = `${brush.name} (${i + 1})`;
-  b.setAttribute('aria-label', brush.name);
-  b.innerHTML = `<i style="width:${Math.min(brush.size, 26)}px;height:${Math.min(brush.size, 26)}px;background:${brush.colour}"></i><small>${i + 1}</small>`;
+  const cv = document.createElement('canvas');
+  cv.width = 32; cv.height = 28;
+  b.append(cv);
+  const n = document.createElement('small');
+  n.textContent = i + 1;
+  b.append(n);
   b.addEventListener('click', () => select(i));
   return b;
 });
@@ -94,7 +103,14 @@ slotBtns.slice(3).forEach(b => menu.append(b));
 
 function select(i) { store.set({ slot: i }); }
 store.subscribe(s => {
-  slotBtns.forEach((b, j) => b.classList.toggle('on', j === s.slot));
+  slotBtns.forEach((b, j) => {
+    const brush = s.brushes[j];
+    b.classList.toggle('on', j === s.slot);
+    b.title = `${brush.name} (${j + 1})`;
+    b.setAttribute('aria-label', brush.name);
+    const c = s.colour;
+    drawSample(b.querySelector('canvas'), brush, hexOf(hsvToRgb(c.h, c.s, c.v)));
+  });
 });
 
 const setMenu = open => {
@@ -118,3 +134,4 @@ const ctx = { store, doc, history, node: id => document.getElementById(id) };
 features.forEach(f => f.mount(ctx));
 attach(colourMod, colourMod.node.querySelector('.cp-head'), { onHint: showHint });
 attach(layersMod, layersMod.node.querySelector('.grip'), { onHint: showHint });
+attach(libraryMod, libraryMod.node.querySelector('.grip'), { onHint: showHint });

@@ -31,8 +31,7 @@ html,body,#app{margin:0;height:100%;overflow:hidden;background:var(--bg);color:v
 .slot{width:40px;height:40px;padding:0;border:0;border-radius:8px;background:transparent;display:grid;place-items:center;position:relative;cursor:pointer}
 .slot:hover{background:var(--hover)}
 .slot.on{background:var(--accent)}
-.slot i{display:block;border-radius:50%;background:var(--ink)}
-.slot.on i{background:var(--on-accent)!important}
+.slot canvas{display:block;width:32px;height:28px}
 .slot small{position:absolute;left:5px;top:3px;font-size:9px;opacity:.6;color:var(--ink)}
 .slot.on small{color:var(--on-accent)}
 .more-wrap{position:relative}
@@ -75,6 +74,17 @@ body.nui .mod:not(#chip){display:none}
 .bp-row{display:grid;grid-template-columns:64px 1fr 40px;align-items:center;gap:6px;font-size:12px}
 .bp-row output{text-align:right;font-variant-numeric:tabular-nums;opacity:.75}
 
+/* library */
+.lib{flex-direction:column;align-items:stretch;width:300px;gap:6px;padding:8px;max-height:60vh}
+.lib-head{display:flex;align-items:center;gap:4px}
+.lib-tabs{flex:1;min-width:0}
+.lib-tabs button{flex:1;min-width:0;white-space:nowrap;padding:0 4px}
+.lib-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;overflow:auto;min-height:0;padding:2px}
+.lib-card{display:flex;flex-direction:column;gap:2px;padding:4px;border:0;border-radius:8px;background:var(--field);color:var(--ink);font:inherit;font-size:11px;cursor:pointer;text-align:left}
+.lib-card canvas{width:100%;height:auto;display:block;border-radius:6px;background:#EEECE4}
+.lib-card:hover{box-shadow:inset 0 0 0 1px var(--line)}
+.lib-card.on{box-shadow:inset 0 0 0 2px var(--accent)}
+
 /* layers */
 .ly{flex-direction:column;align-items:stretch;width:232px;gap:6px;padding:8px;max-height:72vh}
 .ly-head{display:flex;align-items:center;gap:2px}
@@ -105,6 +115,7 @@ body.nui .mod:not(#chip){display:none}
     <button id="redo" class="btn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo"></button>
     <span class="sep"></span>
     <div id="slots" class="slots"></div>
+    <button id="libtoggle" class="btn" title="Brush library" aria-label="Brush library"></button>
     <div class="more-wrap">
       <button id="more" class="btn" aria-expanded="false" aria-controls="menu" title="More brushes (keys 4 to 9)" aria-label="More brushes"></button>
       <div id="menu" class="menu" role="group" aria-label="Brushes 4 to 9"></div>
@@ -118,6 +129,7 @@ body.nui .mod:not(#chip){display:none}
   <div id="colour" class="mod cp"></div>
   <div id="brush" class="mod bp"></div>
   <div id="layers" class="mod ly"></div>
+  <div id="library" class="mod lib"></div>
   <button id="chip" class="mod btn" title="Hide interface (H)" aria-label="Hide interface"></button>
 </div>
 <script type="module" src="main.js"></script>
