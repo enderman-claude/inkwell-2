@@ -1,11 +1,22 @@
 import { register, attach, resetLayout, SNAP } from './ui/modules.js';
 import { createView } from './canvas/view.js';
+import { createPen } from './draw/pen.js';
 
 const W = 2048, H = 1536;
 const stage = document.getElementById('stage');
 const board = document.getElementById('board');
 const view = createView({ stage, board, W, H });
 view.fit();
+const canvas = board.querySelector('canvas');
+const toBoard = (cx, cy) => view.pt(cx, cy);
+const pen = createPen({ stage, canvas, toBoard, size: 10 });
+const bar0 = document.getElementById('bar');
+const [undoBtn, redoBtn] = bar0.querySelectorAll('button:not(.grip)');
+const syncHistory = () => { undoBtn.disabled = !pen.canUndo(); redoBtn.disabled = !pen.canRedo(); };
+undoBtn.addEventListener('click', () => { pen.undo(); syncHistory(); });
+redoBtn.addEventListener('click', () => { pen.redo(); syncHistory(); });
+stage.addEventListener('pointerup', syncHistory);
+undoBtn.disabled = true; redoBtn.disabled = true;
 
 const hint = document.createElement('div');
 hint.className = 'edgehint';

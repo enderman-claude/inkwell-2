@@ -19,6 +19,7 @@ html,body,#app{margin:0;height:100%;overflow:hidden;background:var(--graphite);c
 .grip::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:18px;margin:-9px 0 0 -2px;border-radius:2px;background:currentColor;opacity:.6}
 .mod.v .grip{width:32px;height:16px}
 .mod.v .grip::after{width:18px;height:4px;margin:-2px 0 0 -9px}
+button:disabled{opacity:.4;cursor:default}
 button{font:inherit;color:var(--graphite);background:transparent;border:0.5px solid var(--iron);border-radius:8px;padding:6px 10px;cursor:pointer}
 button:focus-visible{outline:2px solid var(--iron);outline-offset:2px}
 #chip{width:36px;height:36px;justify-content:center;padding:0}
@@ -35,7 +36,7 @@ body.nui .mod:not(#chip){display:none}
 </head>
 <body>
 <div id="app">
-  <div id="stage" class="stage"><div id="board" class="board"><canvas width="2048" height="1536"></canvas></div></div>
+  <div id="stage" class="stage"><div id="board" class="board"><canvas width="2048" height="1536" style="background:#EEECE4"></canvas></div></div>
   <div id="bar" class="mod"><button class="grip" aria-label="Move action bar"></button><button>Undo</button><button>Redo</button></div>
   <div id="panel" class="mod"><div class="row" style="display:flex;align-items:center;gap:6px"><button class="grip" aria-label="Move panel"></button><span>Panel</span><button id="reset" style="margin-left:auto">Reset layout</button></div></div>
   <button id="chip" class="mod" aria-label="Hide interface">&#9675;</button>
