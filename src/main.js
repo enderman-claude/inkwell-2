@@ -50,6 +50,16 @@ attach(panel, panel.node.querySelector('.grip'), { onHint: showHint });
 attach(brushMod, brushMod.node, { onHint: showHint });
 attach(chip, chip.node, { onTap: () => document.body.classList.toggle('nui'), onHint: showHint });
 document.getElementById('reset').addEventListener('click', resetLayout);
+const themeBtn = document.getElementById('theme');
+const applyTheme = t => {
+  document.documentElement.dataset.theme = t;
+  themeBtn.textContent = t === 'dark' ? 'Light mode' : 'Dark mode';
+  try { localStorage.setItem('inkwell2-theme', t); } catch { }
+};
+let savedTheme = 'dark';
+try { savedTheme = localStorage.getItem('inkwell2-theme') || 'dark'; } catch { }
+applyTheme(savedTheme);
+themeBtn.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 
 const undoBtn = document.getElementById('undo');
 const redoBtn = document.getElementById('redo');
