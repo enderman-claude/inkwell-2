@@ -33,6 +33,29 @@ html,body,#app{margin:0;height:100%;overflow:hidden;background:var(--graphite);c
 .menu.open{display:grid}
 .menu .slot{width:44px;height:44px}
 #more.on{background:var(--iron);color:var(--bone)}
+.bp{flex-direction:column;align-items:stretch;width:230px;gap:8px;padding:8px}
+.bp-title{font-weight:600;padding:2px 2px 4px}
+.bp-row{display:grid;grid-template-columns:72px 1fr 48px;align-items:center;gap:6px;font-size:12px}
+.bp-row input{accent-color:var(--iron);min-width:0}
+.bp-row output{text-align:right;font-variant-numeric:tabular-nums;opacity:.75}
+.cp{flex-direction:column;align-items:stretch;width:240px;gap:8px}
+.cp-head{display:flex;align-items:center;gap:8px;cursor:grab}
+.cp-preview{width:32px;height:32px;border-radius:8px;border:.5px solid var(--graphite);flex:none}
+.cp-hex{width:84px;font:inherit;border:none;background:transparent;color:var(--graphite);opacity:.7}
+.cp-wheel{width:200px;height:200px;display:block;margin:0 auto;touch-action:none;cursor:crosshair}
+.cp-mini{display:flex;flex-wrap:wrap;gap:5px}
+.sw{width:22px;height:22px;padding:0;border-radius:5px;border:.5px solid var(--graphite)}
+.sw.linked{border:2px solid var(--graphite)}
+.sw.add{font-size:14px;line-height:1}
+.cp-modes{display:flex;gap:4px}
+.cp-modes button{flex:1;height:22px;padding:0;font-size:11px}
+.cp-modes button.on{background:var(--iron);color:var(--bone)}
+.cp-rows{display:flex;flex-direction:column;gap:6px}
+.cp-row{display:flex;align-items:center;gap:8px;height:22px}
+.cp-lbl{width:10px;font-size:11px;opacity:.7}
+.cp-row .sl,.cp-row input[type=range]{flex:1;min-width:0;height:12px;accent-color:var(--iron)}
+.num{width:40px;height:22px;font:inherit;font-size:11px;padding:0 3px;border:.5px solid var(--iron);border-radius:6px;background:var(--bone);color:var(--graphite);box-sizing:border-box;-moz-appearance:textfield}
+.num::-webkit-inner-spin-button,.num::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 button:disabled{opacity:.4;cursor:default}
 button{font:inherit;color:var(--graphite);background:transparent;border:0.5px solid var(--iron);border-radius:8px;padding:6px 10px;cursor:pointer}
 button:focus-visible{outline:2px solid var(--iron);outline-offset:2px}
@@ -53,6 +76,8 @@ body.nui .mod:not(#chip){display:none}
   <div id="stage" class="stage"><div id="board" class="board"><canvas width="2048" height="1536" style="background:#EEECE4"></canvas></div></div>
   <div id="bar" class="mod bar"><button class="grip" aria-label="Move action bar"></button><button id="undo" class="txt">Undo</button><button id="redo" class="txt">Redo</button><span class="sep"></span><div id="slots" class="slots"></div><span id="brushname" class="bname"></span><button id="more" class="txt" aria-expanded="false" aria-controls="menu" aria-label="Brush slots 4 to 9">More</button><div id="menu" class="menu" role="group" aria-label="Quick access"></div></div>
   <div id="panel" class="mod"><div class="row" style="display:flex;align-items:center;gap:6px"><button class="grip" aria-label="Move panel"></button><span>Panel</span><button id="reset" style="margin-left:auto">Reset layout</button></div></div>
+  <div id="colour" class="mod panel cp"></div>
+  <div id="brush" class="mod panel bp"></div>
   <button id="chip" class="mod" aria-label="Hide interface">&#9675;</button>
 </div>
 <script type="module" src="main.js"></script>

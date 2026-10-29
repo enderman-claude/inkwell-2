@@ -2,6 +2,12 @@ import { register, attach, resetLayout } from './ui/modules.js';
 import { createView } from './canvas/view.js';
 import { createPen } from './draw/pen.js';
 import { BRUSHES } from './ui/brushes.js';
+import { createStore } from './core/store.js';
+import { hsvToRgb, hexOf } from './core/colour.js';
+import { features } from './features/index.js';
+
+const INK = ['#2A2A27', '#D9D6CC', '#EEECE4', '#3B4F6B', '#A4512E', '#1B1B19', '#4A4A45', '#6F6E68', '#A9A89F', '#C9C5B8', '#F5F3EC', '#2E4057', '#5C7A99', '#8FA7BD', '#7A3B22', '#C27A55'];
+const store = createStore({ colour: { h: 215, s: 0.4, v: 0.42 }, recents: [], schemes: [{ name: 'Ink', colors: INK }], active: 0, link: null, brushes: BRUSHES.map(b => ({ ...b, colour: '#2A2A27' })), slot: 0 });
 
 const W = 2048, H = 1536;
 const stage = document.getElementById('stage');
@@ -10,8 +16,7 @@ const canvas = board.querySelector('canvas');
 const view = createView({ stage, board, W, H });
 view.fit();
 
-let slot = 0;
-const pen = createPen({ stage, canvas, toBoard: (x, y) => view.pt(x, y), getBrush: () => BRUSHES[slot] });
+const pen = createPen({ stage, canvas, toBoard: (x, y) => view.pt(x, y), getBrush: () => { const st = store.get(), b = st.brushes[st.slot]; const c = st.colour; return { ...b, colour: hexOf(hsvToRgb(c.h, c.s, c.v)) }; } });
 
 const hint = document.createElement('div');
 hint.className = 'edgehint';
@@ -20,6 +25,9 @@ const showHint = edge => { hint.dataset.edge = edge || ''; hint.classList.toggle
 
 const bar = register('bar', document.getElementById('bar'), { edge: 'bottom', t: 0.5 });
 const panel = register('panel', document.getElementById('panel'), { edge: null, fx: 0.8, fy: 0.2 });
+const colourMod = register('colour', document.getElementById('colour'), { edge: 'right', t: 0.05 });
+const brushMod = register('brush', document.getElementById('brush'), { edge: null, fx: 0.05, fy: 0.55 });
+attach(brushMod, brushMod.node, { onHint: showHint });
 const chip = register('chip', document.getElementById('chip'), { edge: 'right', t: 0.9 });
 attach(bar, bar.node.querySelector('.grip'), { onHint: showHint });
 attach(panel, panel.node.querySelector('.grip'), { onHint: showHint });
@@ -50,11 +58,11 @@ const more = document.getElementById('more');
 slotBtns.slice(0, 3).forEach(b => barSlots.append(b));
 slotBtns.slice(3).forEach(b => menu.append(b));
 
-function select(i) {
-  slot = i;
-  slotBtns.forEach((b, j) => b.classList.toggle('on', j === i));
-  document.getElementById('brushname').textContent = BRUSHES[i].name;
-}
+function select(i) { store.set({ slot: i }); }
+store.subscribe(s => {
+  slotBtns.forEach((b, j) => b.classList.toggle('on', j === s.slot));
+  document.getElementById('brushname').textContent = s.brushes[s.slot].name;
+});
 
 const setMenu = open => {
   menu.classList.toggle('open', open);
@@ -71,3 +79,7 @@ addEventListener('keydown', e => {
   if (n >= 1 && n <= 9) select(n - 1);
 });
 select(0);
+
+const ctx = { store, node: id => document.getElementById(id) };
+features.forEach(f => f.mount(ctx));
+attach(colourMod, colourMod.node.querySelector('.cp-head'), { onHint: showHint });
