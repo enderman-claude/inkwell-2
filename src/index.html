@@ -19,6 +19,20 @@ html,body,#app{margin:0;height:100%;overflow:hidden;background:var(--graphite);c
 .grip::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:18px;margin:-9px 0 0 -2px;border-radius:2px;background:currentColor;opacity:.6}
 .mod.v .grip{width:32px;height:16px}
 .mod.v .grip::after{width:18px;height:4px;margin:-2px 0 0 -9px}
+.bar{padding:6px}
+.sep{width:1px;height:22px;background:#2A2A2733;margin:0 4px}
+.slots{display:flex;gap:4px}
+.slot{width:40px;height:40px;padding:0;display:grid;place-items:center;position:relative;border-radius:8px}
+.slot i{display:block;border-radius:50%}
+.slot small{position:absolute;left:4px;top:2px;font-size:9px;opacity:.7}
+.slot.on{background:var(--iron);border-color:var(--iron)}
+.slot.on i{background:var(--bone)!important}
+.txt{padding:6px 10px}
+.bname{font-size:12px;opacity:.75;margin:0 6px;min-width:70px}
+.menu{position:absolute;bottom:calc(100% + 8px);right:0;display:none;grid-template-columns:repeat(3,44px);gap:6px;background:var(--slate);padding:8px;border-radius:12px;box-shadow:0 0 0 .5px #2A2A27}
+.menu.open{display:grid}
+.menu .slot{width:44px;height:44px}
+#more.on{background:var(--iron);color:var(--bone)}
 button:disabled{opacity:.4;cursor:default}
 button{font:inherit;color:var(--graphite);background:transparent;border:0.5px solid var(--iron);border-radius:8px;padding:6px 10px;cursor:pointer}
 button:focus-visible{outline:2px solid var(--iron);outline-offset:2px}
@@ -37,7 +51,7 @@ body.nui .mod:not(#chip){display:none}
 <body>
 <div id="app">
   <div id="stage" class="stage"><div id="board" class="board"><canvas width="2048" height="1536" style="background:#EEECE4"></canvas></div></div>
-  <div id="bar" class="mod"><button class="grip" aria-label="Move action bar"></button><button>Undo</button><button>Redo</button></div>
+  <div id="bar" class="mod bar"><button class="grip" aria-label="Move action bar"></button><button id="undo" class="txt">Undo</button><button id="redo" class="txt">Redo</button><span class="sep"></span><div id="slots" class="slots"></div><span id="brushname" class="bname"></span><button id="more" class="txt" aria-expanded="false" aria-controls="menu" aria-label="Brush slots 4 to 9">More</button><div id="menu" class="menu" role="group" aria-label="Quick access"></div></div>
   <div id="panel" class="mod"><div class="row" style="display:flex;align-items:center;gap:6px"><button class="grip" aria-label="Move panel"></button><span>Panel</span><button id="reset" style="margin-left:auto">Reset layout</button></div></div>
   <button id="chip" class="mod" aria-label="Hide interface">&#9675;</button>
 </div>
