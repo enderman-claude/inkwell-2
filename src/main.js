@@ -1,4 +1,4 @@
-import { register, attach, resetLayout } from './ui/modules.js';
+import { register, attach, resetLayout, relayout } from './ui/modules.js';
 import { createView } from './canvas/view.js';
 import { createPen } from './draw/pen.js';
 import { BRUSHES, byId } from './brushes/library.js';
@@ -9,13 +9,17 @@ import { createDocument } from './core/document.js';
 import { createHistory } from './core/history.js';
 import { features } from './features/index.js';
 import { icon } from './ui/icons.js';
+import { bind } from './ui/keys.js';
 import { createProjects } from './project/manager.js';
+import { createTools } from './tools/controller.js';
+import { mountToolsPanel } from './features/tools/panel.js';
 
 const START_W = 2048, START_H = 1536;
 const INK = ['#2A2A27', '#D9D6CC', '#EEECE4', '#3B4F6B', '#A4512E', '#1B1B19', '#4A4A45', '#6F6E68', '#A9A89F', '#C9C5B8', '#F5F3EC', '#2E4057', '#5C7A99', '#8FA7BD', '#7A3B22', '#C27A55'];
 
 const store = createStore({
   colour: { h: 215, s: 0.4, v: 0.42 }, recents: [], schemes: [{ name: 'Ink', colors: INK }], active: 0, link: null,
+  tool: 'brush', selTool: 'rect', selMode: 'new',
   brushes: ['pen', 'ink', 'marker', 'pencil', 'eraser', 'wcolour', 'chalk', 'spray', 'softE'].map(id => ({ ...byId(id), colourDiff: [...byId(id).colourDiff] })), slot: 0
 });
 const doc = createDocument(START_W, START_H, '#EEECE4');
@@ -27,9 +31,12 @@ doc.mountBoard(board);
 const view = createView({ stage, board, W: START_W, H: START_H });
 view.fit();
 
+const tools = createTools({ store, doc, history, view, stage, board, toBoard: (x, y) => view.pt(x, y) });
 const pen = createPen({
   stage, doc, history,
   toBoard: (x, y) => view.pt(x, y),
+  allow: () => tools.isBrush(),
+  clip: (before, after) => tools.clipStroke(before, after),
   getBrush: () => store.get().brushes[store.get().slot],
   getColour: () => { const c = store.get().colour; return hexOf(hsvToRgb(c.h, c.s, c.v)); }
 });
@@ -43,6 +50,7 @@ const bar = register('bar', document.getElementById('bar'), { edge: 'bottom', t:
 const panel = register('panel', document.getElementById('panel'), { edge: 'top', t: 0.5 });
 const colourMod = register('colour', document.getElementById('colour'), { edge: 'right', t: 0.05 });
 const brushMod = register('brush', document.getElementById('brush'), { edge: null, fx: 0.05, fy: 0.55 });
+const toolsMod = register('tools', document.getElementById('tools'), { edge: 'right', t: 1 });
 const libraryMod = register('library', document.getElementById('library'), { edge: 'left', t: 1 });
 document.getElementById('libtoggle').addEventListener('click', () => {
   const hidden = libraryMod.node.style.display === 'none';
@@ -51,7 +59,7 @@ document.getElementById('libtoggle').addEventListener('click', () => {
 });
 document.getElementById('libtoggle').innerHTML = icon('brush');
 const layersMod = register('layers', document.getElementById('layers'), { edge: 'left', t: 0.05 });
-const chip = register('chip', document.getElementById('chip'), { edge: 'right', t: 0.9 });
+const chip = register('chip', document.getElementById('chip'), { edge: 'top', t: 0 });
 
 attach(bar, bar.node.querySelector('.grip'), { onHint: showHint });
 attach(panel, panel.node.querySelector('.grip'), { onHint: showHint });
@@ -78,7 +86,7 @@ undoBtn.innerHTML = icon('undo');
 redoBtn.innerHTML = icon('redo');
 document.getElementById('more').innerHTML = icon('more');
 document.getElementById('reset').innerHTML = icon('reset');
-const projects = createProjects({ doc, history, view, notify: msg => alert(msg) });
+const projects = createProjects({ doc, history, view, notify: msg => alert(msg), onImport: layer => tools.openTransform(layer) });
 projects.wire();
 const fileBtns = { 'f-new': ['newDoc', () => projects.newProject()], 'f-open': ['folder', () => projects.open()], 'f-save': ['save', () => projects.save()], 'f-import': ['image', () => projects.importPicked()] };
 Object.entries(fileBtns).forEach(([id, [ic, fn]]) => {
@@ -131,16 +139,17 @@ more.addEventListener('click', e => { e.stopPropagation(); setMenu(!menu.classLi
 document.addEventListener('pointerdown', e => {
   if (!menu.contains(e.target) && e.target !== more) setMenu(false);
 });
-addEventListener('keydown', e => {
-  if (e.target.matches('input, textarea, select')) return;
-  if (e.key.toLowerCase() === 'h' && !e.ctrlKey && !e.metaKey) { document.body.classList.toggle('nui'); chipIcon(); }
-  const n = Number(e.key);
-  if (n >= 1 && n <= 9) select(n - 1);
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? history.redo() : history.undo(); }
-});
+for (let n = 1; n <= 9; n++) bind(String(n), 'brush.slot' + n, () => select(n - 1));
+bind('ctrl+z', 'edit.undo', () => history.undo());
+bind('ctrl+shift+z', 'edit.redo', () => history.redo());
+bind('ctrl+y', 'edit.redo-alt', () => history.redo());
+bind('h', 'view.hide-interface', () => { document.body.classList.toggle('nui'); chipIcon(); });
 
+mountToolsPanel(document.getElementById('tools'), store, tools.actions);
 const ctx = { store, doc, history, node: id => document.getElementById(id) };
 features.forEach(f => f.mount(ctx));
 attach(colourMod, colourMod.node.querySelector('.cp-head'), { onHint: showHint });
 attach(layersMod, layersMod.node.querySelector('.grip'), { onHint: showHint });
+relayout();
 attach(libraryMod, libraryMod.node.querySelector('.grip'), { onHint: showHint });
+attach(toolsMod, toolsMod.node.querySelector('.grip'), { onHint: showHint });

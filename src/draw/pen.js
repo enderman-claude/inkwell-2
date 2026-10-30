@@ -7,12 +7,12 @@ function snap(canvas) {
   return c;
 }
 
-export function createPen({ stage, doc, history, toBoard, getBrush, getColour }) {
+export function createPen({ stage, doc, history, toBoard, getBrush, getColour, allow = () => true, clip = () => null }) {
   let stroke = null;
   let seed = 1;
 
   stage.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'touch' || e.button !== 0) return;
+    if (e.pointerType === 'touch' || e.button !== 0 || !allow()) return;
     const layer = doc.activeLayer();
     if (!layer || layer.lock) return;
     const [x, y] = toBoard(e.clientX, e.clientY);
@@ -48,7 +48,14 @@ export function createPen({ stage, doc, history, toBoard, getBrush, getColour })
     if (!stroke || e.pointerId !== stroke.id) return;
     const { canvas, before } = stroke;
     stroke.ctx.globalCompositeOperation = 'source-over';
-    const after = snap(canvas);
+    let after = snap(canvas);
+    const clipped = clip(before, after);
+    if (clipped) {
+      after = clipped;
+      const c = canvas.getContext('2d');
+      c.clearRect(0, 0, canvas.width, canvas.height);
+      c.drawImage(after, 0, 0);
+    }
     history.push({
       undo: () => { const c = canvas.getContext('2d'); c.clearRect(0, 0, canvas.width, canvas.height); c.drawImage(before, 0, 0); doc.emit(); },
       redo: () => { const c = canvas.getContext('2d'); c.clearRect(0, 0, canvas.width, canvas.height); c.drawImage(after, 0, 0); doc.emit(); }

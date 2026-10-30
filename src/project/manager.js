@@ -1,6 +1,7 @@
 import { makeLayer } from '../core/document.js';
 import { serialize, parse, EXTENSIONS } from './format.js';
 import { askNew } from './newdialog.js';
+import { bind } from '../ui/keys.js';
 
 const BG = { paper: '#EEECE4', white: '#FFFFFF', none: null };
 
@@ -33,7 +34,7 @@ function loadImage(file) {
   });
 }
 
-export function createProjects({ doc, history, view, notify }) {
+export function createProjects({ doc, history, view, notify, onImport = () => {} }) {
   let name = 'Untitled';
   let dirty = false;
   const say = msg => notify ? notify(msg) : alert(msg);
@@ -110,6 +111,7 @@ export function createProjects({ doc, history, view, notify }) {
       doc.insert(layer);
       const after = doc.snapshot();
       history.push({ undo: () => doc.restore(before), redo: () => doc.restore(after) });
+      onImport(layer);
     } catch (err) {
       say(err.message);
     }
@@ -120,14 +122,11 @@ export function createProjects({ doc, history, view, notify }) {
   }
 
   function wire() {
-    addEventListener('keydown', e => {
-      if (e.target.matches('input, textarea, select') || !(e.ctrlKey || e.metaKey)) return;
-      const k = e.key.toLowerCase();
-      if (k === 'n') { e.preventDefault(); newProject(); }
-      else if (k === 'o') { e.preventDefault(); open(); }
-      else if (k === 'i') { e.preventDefault(); importPicked(); }
-      else if (k === 's') { e.preventDefault(); e.shiftKey ? saveAs() : save(); }
-    });
+    bind('ctrl+n', 'file.new', () => newProject());
+    bind('ctrl+o', 'file.open', () => open());
+    bind('ctrl+i', 'file.import', () => importPicked());
+    bind('ctrl+s', 'file.save', () => save());
+    bind('ctrl+shift+s', 'file.save-as', () => saveAs());
     addEventListener('paste', e => {
       const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
       if (item) { e.preventDefault(); importFile(item.getAsFile()); }

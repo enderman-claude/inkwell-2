@@ -87,6 +87,15 @@ dialog.newdoc input:disabled{opacity:.5}
 .nd-actions button{font:inherit;font-size:13px;padding:7px 14px;border-radius:8px;border:0;cursor:pointer;background:transparent;color:var(--ink)}
 .nd-actions .nd-ok{background:var(--accent);color:var(--on-accent)}
 
+/* tools */
+.tl{flex-direction:column;align-items:stretch;padding:6px;gap:4px}
+.tl-group{display:grid;grid-template-columns:repeat(2,34px);gap:2px;padding-bottom:4px;box-shadow:0 1px 0 var(--line)}
+.tl-group:empty{display:none}
+.tl-group button.btn.on{background:var(--accent);color:var(--on-accent)}
+.tl-head{display:flex;justify-content:center}
+.tl-head .grip{width:30px;height:14px}
+.tl-head .grip::after{width:16px;height:4px;margin:-2px 0 0 -8px}
+
 /* library */
 .lib{flex-direction:column;align-items:stretch;width:300px;gap:6px;padding:8px;max-height:60vh}
 .lib-head{display:flex;align-items:center;gap:4px}
@@ -148,6 +157,7 @@ dialog.newdoc input:disabled{opacity:.5}
   <div id="brush" class="mod bp"></div>
   <div id="layers" class="mod ly"></div>
   <div id="library" class="mod lib"></div>
+  <div id="tools" class="mod tl"></div>
   <button id="chip" class="mod btn" title="Hide interface (H)" aria-label="Hide interface"></button>
 </div>
 <script type="module" src="main.js"></script>

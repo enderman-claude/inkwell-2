@@ -85,7 +85,8 @@ export function createDocument(W, H, fill) {
         l.canvas.style.cssText = `position:absolute;left:0;top:0;width:${doc.W}px;height:${doc.H}px;opacity:${l.opacity};display:${l.visible ? 'block' : 'none'};mix-blend-mode:${l.mode}`;
         return l.canvas;
       });
-      board.replaceChildren(...nodes);
+      const overlay = board.querySelector('.overlay');
+      board.replaceChildren(...nodes, ...(overlay ? [overlay] : []));
     };
     doc.subscribe(sync);
     sync();

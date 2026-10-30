@@ -1,3 +1,5 @@
+import { bind } from '../ui/keys.js';
+
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const ROT = Math.PI / 12;
 const norm = a => Math.atan2(Math.sin(a), Math.cos(a));
@@ -79,14 +81,11 @@ export function createView({ stage, board, W: w0, H: h0 }) {
     else zoomAt(e.clientX, e.clientY, v.k * Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0015)));
   }, { passive: false });
 
-  addEventListener('keydown', e => {
-    if (e.target.matches('input, textarea')) return;
-    if (e.code === 'Space') { space = true; e.preventDefault(); }
-    if (e.key === '0') fit();
-    if (e.key === 'z' || e.key === 'Z') zoom100();
-    if (e.key === 'r' || e.key === 'R') rotateBy(e.shiftKey ? -ROT : ROT);
-  });
-  addEventListener('keyup', e => { if (e.code === 'Space') space = false; });
+  bind('space', 'view.pan', () => { space = true; }, { up: () => { space = false; }, allowInDialog: false });
+  bind('0', 'view.fit', () => fit());
+  bind('z', 'view.actual-size', () => zoom100());
+  bind('r', 'view.rotate-cw', () => rotateBy(ROT));
+  bind('shift+r', 'view.rotate-ccw', () => rotateBy(-ROT));
   addEventListener('resize', () => apply());
 
   const setSize = (w, h) => { W = w; H = h; };
