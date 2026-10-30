@@ -74,6 +74,19 @@ body.nui .mod:not(#chip){display:none}
 .bp-row{display:grid;grid-template-columns:64px 1fr 40px;align-items:center;gap:6px;font-size:12px}
 .bp-row output{text-align:right;font-variant-numeric:tabular-nums;opacity:.75}
 
+/* dialogs */
+dialog.newdoc{background:var(--panel);color:var(--ink);border:0;border-radius:12px;padding:0;box-shadow:0 12px 40px #0008;width:340px}
+dialog.newdoc::backdrop{background:#0006}
+dialog.newdoc form{display:flex;flex-direction:column;gap:12px;padding:18px}
+dialog.newdoc label{display:flex;flex-direction:column;gap:4px;font-size:12px}
+dialog.newdoc input,dialog.newdoc select{font:inherit;font-size:13px;background:var(--field);color:var(--ink);border:0;border-radius:8px;padding:7px 9px}
+dialog.newdoc input:disabled{opacity:.5}
+.nd-size{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nd-err{margin:0;min-height:1em;font-size:12px;color:var(--rust)}
+.nd-actions{display:flex;justify-content:flex-end;gap:8px}
+.nd-actions button{font:inherit;font-size:13px;padding:7px 14px;border-radius:8px;border:0;cursor:pointer;background:transparent;color:var(--ink)}
+.nd-actions .nd-ok{background:var(--accent);color:var(--on-accent)}
+
 /* library */
 .lib{flex-direction:column;align-items:stretch;width:300px;gap:6px;padding:8px;max-height:60vh}
 .lib-head{display:flex;align-items:center;gap:4px}
@@ -123,6 +136,11 @@ body.nui .mod:not(#chip){display:none}
   </div>
   <div id="panel" class="mod">
     <button class="grip" aria-label="Move interface panel"></button>
+    <button id="f-new" class="btn" title="New project (Ctrl+N)" aria-label="New project"></button>
+    <button id="f-open" class="btn" title="Open project (Ctrl+O)" aria-label="Open project"></button>
+    <button id="f-save" class="btn" title="Save project (Ctrl+S)" aria-label="Save project"></button>
+    <button id="f-import" class="btn" title="Import image (Ctrl+I, or paste or drop)" aria-label="Import image"></button>
+    <span class="sep"></span>
     <button id="theme" class="btn" title="Switch theme" aria-label="Switch theme"></button>
     <button id="reset" class="btn" title="Reset layout" aria-label="Reset layout"></button>
   </div>

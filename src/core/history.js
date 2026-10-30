@@ -25,6 +25,7 @@ export function createHistory(limit = 30) {
       emit();
     },
     canUndo: () => undoStack.length > 0,
+    clear() { undoStack.length = 0; redoStack.length = 0; emit(); },
     canRedo: () => redoStack.length > 0,
     subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
   };

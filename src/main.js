@@ -9,21 +9,22 @@ import { createDocument } from './core/document.js';
 import { createHistory } from './core/history.js';
 import { features } from './features/index.js';
 import { icon } from './ui/icons.js';
+import { createProjects } from './project/manager.js';
 
-const W = 2048, H = 1536;
+const START_W = 2048, START_H = 1536;
 const INK = ['#2A2A27', '#D9D6CC', '#EEECE4', '#3B4F6B', '#A4512E', '#1B1B19', '#4A4A45', '#6F6E68', '#A9A89F', '#C9C5B8', '#F5F3EC', '#2E4057', '#5C7A99', '#8FA7BD', '#7A3B22', '#C27A55'];
 
 const store = createStore({
   colour: { h: 215, s: 0.4, v: 0.42 }, recents: [], schemes: [{ name: 'Ink', colors: INK }], active: 0, link: null,
   brushes: ['pen', 'ink', 'marker', 'pencil', 'eraser', 'wcolour', 'chalk', 'spray', 'softE'].map(id => ({ ...byId(id), colourDiff: [...byId(id).colourDiff] })), slot: 0
 });
-const doc = createDocument(W, H);
+const doc = createDocument(START_W, START_H, '#EEECE4');
 const history = createHistory();
 
 const stage = document.getElementById('stage');
 const board = document.getElementById('board');
 doc.mountBoard(board);
-const view = createView({ stage, board, W, H });
+const view = createView({ stage, board, W: START_W, H: START_H });
 view.fit();
 
 const pen = createPen({
@@ -77,6 +78,14 @@ undoBtn.innerHTML = icon('undo');
 redoBtn.innerHTML = icon('redo');
 document.getElementById('more').innerHTML = icon('more');
 document.getElementById('reset').innerHTML = icon('reset');
+const projects = createProjects({ doc, history, view, notify: msg => alert(msg) });
+projects.wire();
+const fileBtns = { 'f-new': ['newDoc', () => projects.newProject()], 'f-open': ['folder', () => projects.open()], 'f-save': ['save', () => projects.save()], 'f-import': ['image', () => projects.importPicked()] };
+Object.entries(fileBtns).forEach(([id, [ic, fn]]) => {
+  const b = document.getElementById(id);
+  b.innerHTML = icon(ic);
+  b.addEventListener('click', fn);
+});
 undoBtn.addEventListener('click', () => history.undo());
 redoBtn.addEventListener('click', () => history.redo());
 const syncHistory = () => { undoBtn.disabled = !history.canUndo(); redoBtn.disabled = !history.canRedo(); };

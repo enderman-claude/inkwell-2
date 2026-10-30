@@ -2,7 +2,8 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const ROT = Math.PI / 12;
 const norm = a => Math.atan2(Math.sin(a), Math.cos(a));
 
-export function createView({ stage, board, W, H }) {
+export function createView({ stage, board, W: w0, H: h0 }) {
+  let W = w0, H = h0;
   const v = { x: 0, y: 0, k: 1, r: 0 };
   const apply = () => { board.style.transform = `translate(${v.x}px,${v.y}px) rotate(${v.r}rad) scale(${v.k})`; };
   const set = nv => { Object.assign(v, nv); apply(); };
@@ -88,5 +89,6 @@ export function createView({ stage, board, W, H }) {
   addEventListener('keyup', e => { if (e.code === 'Space') space = false; });
   addEventListener('resize', () => apply());
 
-  return { fit, zoom100, rotateBy, resetRot, zoomAt, pt, state: v, apply };
+  const setSize = (w, h) => { W = w; H = h; };
+  return { fit, zoom100, rotateBy, resetRot, zoomAt, pt, state: v, apply, setSize };
 }
