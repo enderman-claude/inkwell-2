@@ -34,14 +34,14 @@ function loadImage(file) {
   });
 }
 
-export function createProjects({ doc, history, view, notify, onImport = () => {} }) {
+export function createProjects({ doc, history, view, notify, prepare = () => {}, onImport = () => {} }) {
   let name = 'Untitled';
   let dirty = false;
   const say = msg => notify ? notify(msg) : alert(msg);
 
   history.subscribe(() => { dirty = true; });
 
-  const confirmDiscard = () => !dirty || confirm('Discard unsaved changes?');
+  const confirmDiscard = () => { prepare(); return !dirty || confirm('Discard unsaved changes?'); };
 
   function adopt(layers, W, H, active, projectName) {
     doc.load({ W, H, layers, active });
@@ -85,6 +85,7 @@ export function createProjects({ doc, history, view, notify, onImport = () => {}
   }
 
   async function save() {
+    prepare();
     try {
       const bytes = await serialize(doc, name);
       download(bytes, name.replace(/[\\/:*?"<>|]+/g, '-') + EXTENSIONS[0]);

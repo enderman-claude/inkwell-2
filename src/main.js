@@ -86,7 +86,7 @@ undoBtn.innerHTML = icon('undo');
 redoBtn.innerHTML = icon('redo');
 document.getElementById('more').innerHTML = icon('more');
 document.getElementById('reset').innerHTML = icon('reset');
-const projects = createProjects({ doc, history, view, notify: msg => alert(msg), onImport: layer => tools.openTransform(layer) });
+const projects = createProjects({ doc, history, view, notify: msg => alert(msg), prepare: () => tools.commitPending(), onImport: layer => tools.openTransform(layer) });
 projects.wire();
 const fileBtns = { 'f-new': ['newDoc', () => projects.newProject()], 'f-open': ['folder', () => projects.open()], 'f-save': ['save', () => projects.save()], 'f-import': ['image', () => projects.importPicked()] };
 Object.entries(fileBtns).forEach(([id, [ic, fn]]) => {
@@ -94,8 +94,8 @@ Object.entries(fileBtns).forEach(([id, [ic, fn]]) => {
   b.innerHTML = icon(ic);
   b.addEventListener('click', fn);
 });
-undoBtn.addEventListener('click', () => history.undo());
-redoBtn.addEventListener('click', () => history.redo());
+undoBtn.addEventListener('click', () => { tools.commitPending(); history.undo(); });
+redoBtn.addEventListener('click', () => { tools.commitPending(); history.redo(); });
 const syncHistory = () => { undoBtn.disabled = !history.canUndo(); redoBtn.disabled = !history.canRedo(); };
 history.subscribe(syncHistory);
 syncHistory();
@@ -140,9 +140,9 @@ document.addEventListener('pointerdown', e => {
   if (!menu.contains(e.target) && e.target !== more) setMenu(false);
 });
 for (let n = 1; n <= 9; n++) bind(String(n), 'brush.slot' + n, () => select(n - 1));
-bind('ctrl+z', 'edit.undo', () => history.undo());
-bind('ctrl+shift+z', 'edit.redo', () => history.redo());
-bind('ctrl+y', 'edit.redo-alt', () => history.redo());
+bind('ctrl+z', 'edit.undo', () => { tools.commitPending(); history.undo(); });
+bind('ctrl+shift+z', 'edit.redo', () => { tools.commitPending(); history.redo(); });
+bind('ctrl+y', 'edit.redo-alt', () => { tools.commitPending(); history.redo(); });
 bind('h', 'view.hide-interface', () => { document.body.classList.toggle('nui'); chipIcon(); });
 
 mountToolsPanel(document.getElementById('tools'), store, tools.actions);

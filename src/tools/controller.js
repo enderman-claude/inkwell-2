@@ -204,7 +204,7 @@ export function createTools({ store, doc, history, view, stage, board, toBoard }
       layer.canvas.getContext('2d').clearRect(0, 0, layer.canvas.width, layer.canvas.height);
     }
     box = { cx: b.x + b.w / 2, cy: b.y + b.h / 2, sw: b.w, sh: b.h, sx: 1, sy: 1, rot: 0, fx: 1, fy: 1 };
-    tf = { layer, before, src, box };
+    tf = { layer, before, src, box, selBefore: sel.snapshot(), changed: false };
     if (store.get().tool !== 'transform') prevTool = store.get().tool;
     setTool('transform');
     renderTf();
@@ -213,14 +213,16 @@ export function createTools({ store, doc, history, view, stage, board, toBoard }
 
   function applyTransform() {
     if (!tf) return;
-    const { layer, before } = tf;
+    const { layer, before, selBefore } = tf;
+    if (!tf.changed) { cancelTransform(); return; }
+    if (sel.isActive()) sel.clear();
     const after = copyCanvas(layer.canvas);
+    const selAfter = sel.snapshot();
     history.push({
-      undo: () => { const c = layer.canvas.getContext('2d'); c.clearRect(0, 0, after.width, after.height); c.drawImage(before, 0, 0); doc.emit(); },
-      redo: () => { const c = layer.canvas.getContext('2d'); c.clearRect(0, 0, after.width, after.height); c.drawImage(after, 0, 0); doc.emit(); }
+      undo: () => { const c = layer.canvas.getContext('2d'); c.clearRect(0, 0, after.width, after.height); c.drawImage(before, 0, 0); sel.restore(selBefore); doc.emit(); },
+      redo: () => { const c = layer.canvas.getContext('2d'); c.clearRect(0, 0, after.width, after.height); c.drawImage(after, 0, 0); sel.restore(selAfter); doc.emit(); }
     });
     tf = null;
-    if (sel.isActive()) undoableSelection(() => sel.clear());
     overlay.clear();
     setTool(prevTool === 'transform' ? 'brush' : prevTool);
     doc.emit();
@@ -256,6 +258,7 @@ export function createTools({ store, doc, history, view, stage, board, toBoard }
     if (!tf || !mode) return;
     const [x, y] = toBoard(e.clientX, e.clientY);
     const b = tf.box;
+    tf.changed = true;
     if (mode === 'move') { b.cx = start.cx + x - start.x; b.cy = start.cy + y - start.y; }
     if (mode === 'rotate') b.rot = Math.atan2(y - b.cy, x - b.cx) + Math.PI / 2;
     if (mode === 'scale') {
@@ -310,13 +313,14 @@ export function createTools({ store, doc, history, view, stage, board, toBoard }
       return clipToSelection(before, after, sel.mask);
     },
     openTransform(layer) { return startTransform(layer, false); },
+    commitPending() { if (tf) applyTransform(); },
     actions: {
       transform: () => startTransform(doc.activeLayer(), true),
       all: () => undoableSelection(() => sel.all()),
       none: () => undoableSelection(() => sel.clear()),
       invert: () => undoableSelection(() => sel.invert()),
       feather: () => undoableSelection(() => sel.feather(4)),
-      flip: axis => { if (tf) { if (axis === 'h') tf.box.fx *= -1; else tf.box.fy *= -1; renderTf(); } },
+      flip: axis => { if (tf) { if (axis === 'h') tf.box.fx *= -1; else tf.box.fy *= -1; tf.changed = true; renderTf(); } },
       apply: () => applyTransform(),
       cancel: () => cancelTransform()
     },
@@ -324,6 +328,7 @@ export function createTools({ store, doc, history, view, stage, board, toBoard }
     flip(axis) {
       if (!tf) return;
       if (axis === 'h') tf.box.fx *= -1; else tf.box.fy *= -1;
+      tf.changed = true;
       renderTf();
     },
     isTransforming: () => !!tf,
